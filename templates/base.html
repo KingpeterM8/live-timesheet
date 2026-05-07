@@ -1,0 +1,98 @@
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%; /* Changed from min-height to height for better centering */
+        background-color: #000000;
+        overflow-x: hidden;
+    }
+
+    body {
+        background: linear-gradient(-45deg, #000000, #1a0a02, #000000, #261105);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+        /* Flexbox to center the WHOLE group */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* This container keeps the title and card grouped together */
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 500px;
+        padding: 20px;
+    }
+
+    .main-title {
+        color: #f97316;
+        text-transform: uppercase;
+        font-size: 2.6rem; /* Slightly smaller to fit better */
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-align: center;
+        margin-bottom: 50px; /* Reduced this to bring the card up */
+        text-shadow: 0 0 3px rgba(249, 115, 22, 0.4);
+    }
+
+    .content-wrapper {
+        width: 100%;
+    }
+    /* Style for Django's default error list */
+    .errorlist {
+        color: #f87171; /* A soft red/coral that looks great on black */
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #7f1d1d;
+        background-color: rgba(127, 29, 29, 0.2);
+        border-radius: 6px;
+        padding: 10px;
+        /* This makes the box pop if there is an error */
+        animation: shake 0.4s ease-in-out;
+    }
+
+    .errorlist li {
+        margin: 0;
+    }
+
+    /* Optional: Shake animation for a more "active" feel */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    /* Also target field-specific errors just in case */
+    .errornote {
+        color: #f97316;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 10px;
+}
+</style>
+
+<body>
+    <div class="main-container">
+        <h1 class="main-title">Empyreal P&C Timesheet</h1>
+
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
