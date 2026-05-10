@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .timesheet-card {
+        background-color: rgba(21, 21, 23, 0.95);
+        border: 1px solid #27272a;
+        border-radius: 12px;
+        padding: 40px;
+        width: 100%;
+        max-width: 600px;
+        margin: 40px auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        color: #ffffff;
+    }
+
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        border-bottom: 1px solid #3f3f46;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+
+    h2 { margin: 0; color: #f97316; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+
+    .user-info { color: #a1a1aa; font-size: 0.9rem; }
+    .user-info a { color: #f97316; text-decoration: none; margin-left: 10px; font-weight: bold; }
+    .user-info a:hover { color: #ea580c; }
+
+    .form-group { margin-bottom: 20px; }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        color: #a1a1aa;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        background-color: #18181b;
+        border: 1px solid #3f3f46;
+        border-radius: 6px;
+        color: #ffffff;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        font-family: inherit;
+    }
+
+    input:focus, select:focus { border-color: #f97316; outline: none; }
+    input[readonly] { background-color: #09090b; color: #52525b; cursor: not-allowed; }
+
+    /* Validation Styles */
+    .input-error { border-color: #ff4444 !important; background-color: rgba(255, 68, 68, 0.05); }
+    .error-msg { color: #ff4444; font-size: 0.8rem; margin-top: 5px; display: none; font-weight: 600; }
+
+    /* Trade Type Rows */
+    .trade-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .trade-select { flex: 2; }
+    .trade-hours { flex: 1; }
+
+    .btn-secondary {
+        background-color: #27272a; color: #ffffff; border: 1px solid #3f3f46;
+        padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+    }
+    .btn-secondary:hover { background-color: #3f3f46; }
+
+    .btn-submit {
+        width: 100%; padding: 15px; background-color: #f97316; color: #ffffff;
+        border: none; border-radius: 8px; font-weight: 800; text-transform: uppercase;
+        cursor: pointer; margin-top: 20px; font-size: 1rem;
+    }
+    .btn-submit:hover { background-color: #ea580c; }
+
+    .allocation-box {
+        background-color: #18181b; padding: 15px; border-radius: 6px;
+        border: 1px dashed #3f3f46; margin-top: 10px; text-align: center;
+    }
+    .allocation-text { font-size: 0.9rem; font-weight: bold; }
+    .allocation-good { color: #22c55e; } /* Green */
+    .allocation-bad { color: #ff4444; }  /* Red */
+
+    .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* This centers the children horizontally */
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+    }
+
+    .brand-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .brand-header h1 {
+        color: #f97316; /* Your Empyreal Orange */
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    .brand-header .sub-brand {
+        color: #f97316;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 4px;
+    }
+
+    /* Ensure the card doesn't have "margin: auto" fighting the flexbox */
+    .timesheet-card {
+        margin: 0;
+        /* ... keep your other existing card styles ... */
+    }
+
+    /* Mobile-specific adjustments */
+@media (max-width: 600px) {
+    .timesheet-card {
+        padding: 20px; /* Less padding so the form fills the screen */
+        border-radius: 0; /* Flush with screen edges */
+        border: none;
+    }
+
+    input, select {
+        padding: 16px; /* Larger tap target for fingers */
+        font-size: 16px; /* Prevents iOS from "zooming in" on focus */
+    }
+
+    .trade-row {
+        flex-direction: column; /* Stack trade type and hours vertically */
+        align-items: stretch;
+    }
+
+    .btn-submit {
+        padding: 20px; /* Big easy-to-hit button at the bottom */
+    }
+}
+    /* Styling the Current Time button to match the site */
+    .btn-now {
+        background-color: #27272a;
+        color: #f97316;
+        border: 1px solid #3f3f46;
+        border-radius: 6px;
+        padding: 8px 15px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        margin-top: 8px;
+        display: inline-block;
+        transition: background 0.2s;
+    }
+
+    .btn-now:hover {
+        background-color: #3f3f46;
+    }
+    /* Style the dropdown options for dark mode */
+    select option {
+        background-color: #18181b; /* Matches your input background */
+        color: #ffffff;            /* Force white text */
+        padding: 10px;
+    }
+
+    /* Specifically target the dropdown when it's focused or open */
+    select:focus {
+        background-color: #18181b;
+        color: #ffffff;
+    }
+
+    /* This handles the "Select Trade..." placeholder color */
+    select:invalid,
+    select option[value=""] {
+        color: #a1a1aa;
+    }
+
+    .input-error {
+        border-color: #ef4444 !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+    }
+
+</style>
+
+<div class="page-wrapper">
+    <div class="brand-header">
+        <h1>EMPYREAL P&C</h1>
+        <p class="sub-brand">TIMESHEET</p>
+    </div>
+
+    <div class="timesheet-card">
+        <div class="header-row">
+            <h2>{% if instance %}Edit Your Time{% else %}Record Your Time{% endif %}</h2>
+            <div class="user-info">
+                {{ request.user.username }} |
+                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: #f97316; font-weight: bold; cursor: pointer; padding: 0; font-family: inherit; font-size: inherit;">
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <form id="timesheetForm" method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="date" name="date" required
+                       value="{% if instance %}{{ instance.date_worked|date:'Y-m-d' }}{% endif %}">
+            </div>
+
+            <div class="form-group">
+                <label>Job</label>
+                <input type="text" id="job" name="job" placeholder="E.g., 123 Main St Project" required
+                       value="{% if instance %}{{ instance.task_description }}{% endif %}">
+            </div>
+
+            <div class="form-group">
+                <label>Start Time</label>
+                <input type="time" id="start_time" name="start_time" class="time-input" required
+                       value="{% if instance %}{{ instance.start_time|time:'H:i' }}{% endif %}">
+            </div>
+
+            <div class="form-group">
+                <label>Lunch Break</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                    <button type="button" class="btn-secondary" style="flex: 1;" onclick="setLunch(30)">30 Min</button>
+                    <button type="button" class="btn-secondary" style="flex: 1;" onclick="setLunch(60)">60 Min</button>
+                    <button type="button" class="btn-secondary" style="color: #ff4444; border-color: #442222;" onclick="setLunch(0)">None</button>
+                </div>
+                <p id="lunch-status" style="font-size: 0.8rem; color: #a1a1aa; margin: 0; font-style: italic;">No lunch recorded</p>
+                    <input type="hidden" id="lunch_out" name="lunch_out" value="{% if instance and instance.lunch_duration > 0 %}12:00{% endif %}">
+                    <input type="hidden" id="lunch_in" name="lunch_in" value="{% if instance %}{% if instance.lunch_duration == 30 %}12:30{% elif instance.lunch_duration == 60 %}13:00{% endif %}{% endif %}">
+            </div>
+
+            <div class="form-group">
+                <label>End Time</label>
+                <input type="time" id="end_time" name="end_time" class="time-input" required
+                       value="{% if instance %}{{ instance.end_time|time:'H:i' }}{% endif %}">
+                <button type="button" class="btn-now" onclick="setCurrentTime('end_time')">Current Time</button>
+                <div class="error-msg" id="end_error">End time must be later than Start time.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Total Hours</label>
+                <input type="text" id="total_hours" name="total_hours" readonly value="0.00">
+            </div>
+
+            <div class="form-group" id="trade_container">
+                <label>Trade Type Allocation</label>
+                {% if instance %}
+                    {% for allocation in instance.trade_allocations.all %}
+                    <div class="trade-row">
+                        <select class="trade-select" name="trade_type[]" required>
+                            <option value="" disabled>Select Trade...</option>
+                            <option value="Painting - Interior" {% if allocation.trade_type == "Painting - Interior" %}selected{% endif %}>Painting - Interior</option>
+                            <option value="Painting - Exterior" {% if allocation.trade_type == "Painting - Exterior" %}selected{% endif %}>Painting - Exterior</option>
+                            <option value="Roofing" {% if allocation.trade_type == "Roofing" %}selected{% endif %}>Roofing</option>
+                            <option value="Framing" {% if allocation.trade_type == "Framing" %}selected{% endif %}>Framing</option>
+                            <option value="Finish Carpentry" {% if allocation.trade_type == "Finish Carpentry" %}selected{% endif %}>Finish Carpentry</option>
+                            <option value="Flooring" {% if allocation.trade_type == "Flooring" %}selected{% endif %}>Flooring</option>
+                            <option value="Fencing" {% if allocation.trade_type == "Fencing" %}selected{% endif %}>Fencing</option>
+                            <option value="Remodel / Repair" {% if allocation.trade_type == "Remodel / Repair" %}selected{% endif %}>Remodel / Repair</option>
+                            <option value="Estimator" {% if allocation.trade_type == "Estimator" %}selected{% endif %}>Estimator</option>
+                        </select>
+                        <input type="number" class="trade-hours" name="trade_hours[]" step="0.01" min="0" value="{{ allocation.hours_allocated }}" required>
+                        <button type="button" class="btn-secondary remove-trade" style="color:#ff4444; border-color:#ff4444;">X</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <button type="button" class="btn-secondary" id="add_trade_btn">+ Add Another Trade</button>
+
+            <div class="allocation-box">
+                <span class="allocation-text" id="allocation_display">Time left to allocate: 0.00 hrs</span>
+                <div class="error-msg" id="allocation_error">Trade hours must equal Total hours exactly.</div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submit_btn">Save & Review</button>
+        </form>
+    </div>
+</div>
+
+<template id="trade_row_template">
+    <div class="trade-row">
+        <select class="trade-select" name="trade_type[]" required>
+            <option value="" disabled selected>Select Trade...</option>
+            <option value="Painting - Interior">Painting - Interior</option>
+            <option value="Painting - Exterior">Painting - Exterior</option>
+            <option value="Roofing">Roofing</option>
+            <option value="Framing">Framing</option>
+            <option value="Finish Carpentry">Finish Carpentry</option>
+            <option value="Flooring">Flooring</option>
+            <option value="Fencing">Fencing</option>
+            <option value="Remodel / Repair">Remodel / Repair</option>
+            <option value="Estimator">Estimator</option>
+        </select>
+        <input type="number" class="trade-hours" name="trade_hours[]" step="0.01" min="0" placeholder="Hrs" required>
+        <button type="button" class="btn-secondary remove-trade" style="color:#ff4444; border-color:#ff4444;">X</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('date');
+
+    // 1. Only autofill date if it's a NEW entry
+    if (!dateInput.value) {
+        const now = new Date();
+        const localDate = now.getFullYear() + '-' +
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                      String(now.getDate()).padStart(2, '0');
+        dateInput.value = localDate;
+    }
+
+    // 2. Handle Trade Rows based on whether we are Editing or New
+    {% if instance %}
+        // If editing, the HTML already looped through the saved rows. We just need to activate them.
+        const savedDuration = {{ instance.lunch_duration|default:0 }};
+        setLunch(savedDuration);
+        document.querySelectorAll('.trade-row').forEach(row => {
+            row.querySelector('.trade-hours').addEventListener('input', updateAllocation);
+            row.querySelector('.trade-select').addEventListener('change', updateAllocation);
+            row.querySelector('.remove-trade').addEventListener('click', function(e) {
+                e.target.closest('.trade-row').remove();
+                updateAllocation();
+            });
+        });
+    {% else %}
+        // If new, spawn the first blank row
+        addTradeRow();
+    {% endif %}
+
+    // 3. Attach listeners to static elements
+    document.querySelectorAll('.time-input').forEach(input => {
+        input.addEventListener('change', calculateTimes);
+    });
+    document.getElementById('add_trade_btn').addEventListener('click', addTradeRow);
+
+    // 4. Force calculation on load to display saved Total Hours and Allocations
+    calculateTimes();
+});
+
+// --- GLOBAL FUNCTIONS ---
+
+function addTradeRow() {
+    const template = document.getElementById('trade_row_template');
+    const container = document.getElementById('trade_container');
+    const clone = template.content.cloneNode(true);
+
+    clone.querySelector('.trade-hours').addEventListener('input', updateAllocation);
+    clone.querySelector('.trade-select').addEventListener('change', updateAllocation);
+    clone.querySelector('.remove-trade').addEventListener('click', function(e) {
+        e.target.closest('.trade-row').remove();
+        updateAllocation();
+    });
+    container.appendChild(clone);
+}
+
+function calculateTimes() {
+    document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+    document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+
+    const start = document.getElementById('start_time').value;
+    const lunchOut = document.getElementById('lunch_out').value;
+    const lunchIn = document.getElementById('lunch_in').value;
+    const end = document.getElementById('end_time').value;
+
+    if (start && end) {
+        const sVal = timeToDecimal(start);
+        const eVal = timeToDecimal(end);
+        let isValid = true;
+
+        if (sVal >= eVal) {
+            isValid = false;
+            document.getElementById('end_error').style.display = 'block';
+            document.getElementById('end_time').classList.add('input-error');
+        }
+
+        if (isValid) {
+            let totalShift = eVal - sVal;
+            let lunchBreak = 0;
+
+            if (lunchOut && lunchIn) {
+                const loVal = timeToDecimal(lunchOut);
+                const liVal = timeToDecimal(lunchIn);
+                if (liVal > loVal) {
+                    lunchBreak = liVal - loVal;
+                }
+            }
+
+            let finalHours = totalShift - lunchBreak;
+            if (finalHours < 0) finalHours = 0;
+            document.getElementById('total_hours').value = finalHours.toFixed(2);
+        } else {
+            document.getElementById('total_hours').value = "0.00";
+        }
+    }
+    updateAllocation();
+}
+
+function updateAllocation() {
+    const totalHours = parseFloat(document.getElementById('total_hours').value) || 0;
+    let allocatedHours = 0;
+    const selectedTrades = [];
+    let hasDuplicate = false;
+
+    document.querySelectorAll('.trade-select').forEach(select => select.classList.remove('input-error'));
+
+    document.querySelectorAll('.trade-row').forEach(row => {
+        const select = row.querySelector('.trade-select');
+        const hoursInput = row.querySelector('.trade-hours');
+        const tradeVal = select.value;
+
+        if (tradeVal) {
+            if (selectedTrades.includes(tradeVal)) {
+                hasDuplicate = true;
+                select.classList.add('input-error');
+            }
+            selectedTrades.push(tradeVal);
+        }
+        allocatedHours += parseFloat(hoursInput.value) || 0;
+    });
+
+    const diff = totalHours - allocatedHours;
+    const display = document.getElementById('allocation_display');
+    const submitBtn = document.getElementById('submit_btn');
+
+    display.textContent = `Time left to allocate: ${diff.toFixed(2)} hrs`;
+    display.classList.remove('allocation-good', 'allocation-bad');
+
+    if (Math.abs(diff) < 0.01 && totalHours > 0 && !hasDuplicate) {
+        display.classList.add('allocation-good');
+        display.textContent = "All hours allocated perfectly ✓";
+        document.getElementById('allocation_error').style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = "1";
+    } else {
+        display.classList.add('allocation-bad');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = "0.5";
+
+        if (hasDuplicate) {
+            display.textContent = "Error: Duplicate trade types selected";
+        } else if (diff < -0.01) {
+            display.textContent = `Over-allocated by: ${Math.abs(diff).toFixed(2)} hrs`;
+        }
+    }
+}
+
+function timeToDecimal(t) {
+    if (!t) return 0;
+    const [h, m] = t.split(':');
+    return parseInt(h, 10) + parseInt(m, 10) / 60;
+}
+
+function setLunch(minutes) {
+    const statusText = document.getElementById('lunch-status');
+    const outField = document.getElementById('lunch_out');
+    const inField = document.getElementById('lunch_in');
+
+    if (minutes === 0) {
+        outField.value = ""; inField.value = "";
+        statusText.textContent = "No lunch recorded";
+        statusText.style.color = "#a1a1aa";
+    } else {
+        outField.value = "12:00";
+        inField.value = (minutes === 30) ? "12:30" : "13:00";
+        statusText.textContent = `✓ ${minutes} min lunch applied`;
+        statusText.style.color = "#22c55e";
+    }
+    calculateTimes();
+}
+
+function setCurrentTime(inputId) {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById(inputId).value = `${hours}:${minutes}`;
+    calculateTimes();
+}
+</script>
+
+{% endblock %}

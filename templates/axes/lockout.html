@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="message-card" style="text-align: center; max-width: 500px; margin: 50px auto;">
+    <h2 style="color: #ff4444;">Access Denied</h2>
+    <p style="color: #a1a1aa;">
+        Too many failed login attempts. For security reasons, your account has been temporarily locked.
+    </p>
+    <p style="color: #f97316; font-weight: bold;">
+        Please try again in 1 hour.
+    </p>
+        <a href="{% url 'login' %}" class="btn-submit" style="display:inline-block; margin-top:20px; text-decoration:none;">
+        Back to Login
+        </a>
+</div>
+{% endblock %}

@@ -25,8 +25,11 @@ SECRET_KEY = 'django-insecure-g7aeo&@gif6%s-le#0%lhcw$)b##d8q%1y6wy+rqhd38(styla
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1'
+]
 
+AXES_IP_WHITELIST_FIELD = 'HTTP_X_FORWARDED_FOR' # For railway
 
 # Application definition
 
@@ -37,12 +40,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'timesheet',
+    'axes',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -84,23 +90,26 @@ DATABASES = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator' },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': { 'min_length': 12 } },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator' },
+    { 'NAME': 'pwned_passwords_django.validators.PwnedPasswordsValidator' },
+    { 'NAME': 'timesheet.validators.ComplexityValidator' },
 ]
 
 LOGIN_REDIRECT_URL = "home"
 
 LOGOUT_REDIRECT_URL = "login"
+
+# Force all traffic to HTTPS
+#SECURE_SSL_REDIRECT = True
+
+# Ensure cookies are only sent over HTTPS
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True
+
+# Prevent browser from "sniffing" content types
+#SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -120,3 +129,24 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
+#CHANGE AT END
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+AUTHENTICATION_BACKENDS = [
+    # Axes must be first to intercept the login attempt
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Axes Configuration
+AXES_FAILURE_LIMIT = 5            # Number of tries before locking
+AXES_COOLOFF_TIME = 1             # How many hours to stay locked out
+AXES_RESET_ON_SUCCESS = True      # If they get it right, reset the counter
+
+# Tell Axes to redirect to a specific URL when someone is locked out
+AXES_LOCKOUT_TEMPLATE = 'axes/lockout.html'
+
+# Change 'UTC' to your actual timezone, e.g., 'America/New_York' or 'America/Los_Angeles'
+TIME_ZONE = 'America/Los_Angeles'
+
+USE_TZ = True
