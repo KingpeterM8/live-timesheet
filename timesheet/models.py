@@ -32,6 +32,7 @@ class TimesheetEntry(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
 
+    lunch_start_time = models.TimeField(null=True, blank=True)
     lunch_duration = models.IntegerField(default=0)
 
     date_worked = models.DateField()

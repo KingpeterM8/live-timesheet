@@ -2,15 +2,6 @@
 
 {% block content %}
 <style>
-    /* 1. Ensure the container centers all content */
-    .page-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Centers header and card horizontally */
-        justify-content: flex-start;
-        min-height: 100vh;
-        padding: 40px 20px;
-    }
 
     /* 2. Styling for the brand titles */
     .brand-header {
@@ -39,11 +30,13 @@
         background-color: rgba(21, 21, 23, 0.95);
         border: 1px solid #27272a;
         border-radius: 12px;
-        padding: 40px;
-        width: 100%;
-        max-width: 600px;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         color: #ffffff;
+
+        max-width: 600px;
+        width: 90%;
+        margin: 0 auto;
+        padding: 30px;
     }
 
     .summary-box {
@@ -113,10 +106,6 @@
 </style>
 
 <div class="page-wrapper">
-    <div class="brand-header">
-        <h1>EMPYREAL P&C</h1>
-        <p class="sub-brand">Review Submission</p>
-    </div>
 
     <div class="timesheet-card">
         <h3 style="color: #22c55e; margin-top: 0; text-align: center;">✓ SAVED AS DRAFT</h3>
@@ -146,7 +135,14 @@
 
             <div class="summary-row">
                 <span class="summary-label">Lunch Break:</span>
-                <span>{% if timesheet.lunch_duration > 0 %}{{ timesheet.lunch_duration }} mins{% else %}None{% endif %}</span>
+                <div style="text-align: right;">
+                    <span style="color: #71717a; font-size: 0.85rem; margin-right: 8px;">
+                        {% if timesheet.lunch_start_time %}
+                            (Started {{ timesheet.lunch_start_time|time:"g:i A" }})
+                        {% endif %}
+                    </span>
+                    <span class="value">{{ timesheet.lunch_duration }} mins</span>
+                </div>
             </div>
 
             <div class="summary-row">

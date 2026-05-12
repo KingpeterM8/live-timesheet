@@ -1,11 +1,8 @@
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%; /* Changed from min-height to height for better centering */
-        background-color: #000000;
-        overflow-x: hidden;
+    ul, li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     }
 
     body {
@@ -16,8 +13,12 @@
 
         /* Flexbox to center the WHOLE group */
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: center; /* This handles the vertical centering */
+        min-height: 100vh;
+        width: 100%;
+        padding: 0px 0px; /* Use small padding instead of 250px */
     }
 
     @keyframes gradientShift {
@@ -26,30 +27,10 @@
         100% { background-position: 0% 50%; }
     }
 
-    /* This container keeps the title and card grouped together */
-    .main-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        max-width: 500px;
-        padding: 20px;
-    }
-
-    .main-title {
-        color: #f97316;
-        text-transform: uppercase;
-        font-size: 2.5rem; /* Slightly smaller to fit better */
-        font-weight: 900;
-        letter-spacing: 2px;
-        text-align: center;
-        margin-bottom: 50px; /* Reduced this to bring the card up */
-        text-shadow: 0 2 7px rgba(249, 115, 22, 0.4);
-    }
-
     .content-wrapper {
         width: 100%;
     }
+
     /* Style for Django's default error list */
     .errorlist {
         color: #f87171; /* A soft red/coral that looks great on black */
@@ -85,15 +66,60 @@
         display: block;
         margin-bottom: 10px;
 }
+    .main-title {
+        color: #f97316;
+        text-transform: uppercase;
+        font-size: 2.8rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-align: center;
+        margin-bottom: 30px; /* Changed from 45px to 5px */
+        line-height: 1;
+    }
 
+    .main-title .sub-title {
+        display: block; /* Moves 'Timesheet' to its own line for a professional stacked look */
+        font-size: 1.2rem; /* Much smaller than the main name */
+        font-weight: 400; /* Thinner weight for contrast */
+        letter-spacing: 6px; /* High tracking for a modern, 'wide' cinematic feel */
+        margin-top: 5px;
+        color: #ffffff; /* Contrast against the orange, or keep #f97316 if preferred */
+        opacity: 0.8;
+    }
+
+    /* Update the container to accommodate the wider layout you wanted */
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* This is the most important line for horizontal centering */
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 0px 0px; /* Top/Bottom 20px, Left/Right 0 */
+        box-sizing: border-box;
+    }
+
+    .brand-header {
+    text-align: center;
+    margin-bottom: 0px; /* Reduced from 70px or 33px */
+    }
+
+    .page-wrapper {
+
+    }
 </style>
-
+<head>
+    <title>{% block title %}Empyreal Timesheet{% endblock %}</title>
+</head>
 <body>
-    <div class="main-container">
-        <h1 class="main-title">Empyreal P&C Timesheet</h1>
+        <div class="main-container">
+            <h1 class="main-title">
+                Empyreal P&C <span class="sub-title">Timesheet</span>
+            </h1>
 
-        <div class="content-wrapper">
-            {% block content %}{% endblock %}
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
         </div>
-    </div>
+
 </body>

@@ -13,4 +13,6 @@ urlpatterns = [
 
     # This will result in /sheet/timesheet/finalize/ID/
     path('timesheet/finalize/<str:pk>/', views.finalize_timesheet, name='finalize_timesheet'),
+
+    path('history/', views.timesheet_history, name='timesheet_history'),
 ]

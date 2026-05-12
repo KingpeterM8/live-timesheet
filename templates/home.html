@@ -1,114 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empyreal Painting Timesheet</title>
-    <style>
-        body {
-            /* 1. Set up the gradient background */
-            background: linear-gradient(-45deg, #09090b, #1f0d04, #09090b, #2a1105);
-            background-size: 400% 400%;
-            /* 2. Apply the animation */
-            animation: gradientShift 15s ease infinite;
+{% extends "base.html" %}
 
-            color: #e4e4e7;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden; /* Prevents scrollbars from the animation */
-        }
+{% block content %}
+<style>
+    /* This container centers itself automatically because of base.html's flex settings */
+    .button-container {
+        background-color: rgba(24, 24, 27, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid #27272a;
+        padding: 35px; /* Slightly reduced padding */
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 
-        /* 3. Define the keyframes for the background movement */
-        @keyframes gradientShift {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
 
-        .title-container {
-            margin-bottom: 40px;
-            text-align: center;
-            z-index: 1; /* Keeps text above the background */
-        }
+    .btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 12px; /* Smaller padding makes the buttons sleeker */
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem; /* Slightly smaller text */
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        text-decoration: none;
+        box-sizing: border-box;
+        letter-spacing: 0.5px;
+    }
 
-        h1 {
-            color: #f97316;
-            text-transform: uppercase;
-            font-size: 2.5rem;
-            font-weight: 900;
-            margin: 50;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 10px rgba(249, 115, 22, 0.3); /* Added a subtle orange glow */
-        }
+    .btn-primary {
+        background-color: #f97316;
+        color: #ffffff;
+        box-shadow: 0 1px 15px rgba(249, 115, 22, 0.2);
+    }
 
-        .card {
-            background-color: rgba(21, 21, 23, 0.85); /* Made slightly transparent to show background */
-            backdrop-filter: blur(10px); /* Adds a frosted glass effect over the animation */
-            border: 1px solid #27272a;
-            border-radius: 12px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            z-index: 1;
-        }
+    .btn-primary:hover {
+        background-color: #ea580c;
+        transform: translateY(-2px);
+    }
 
-        .btn {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
-            text-decoration: none;
-            box-sizing: border-box;
-            letter-spacing: 0.5px;
-        }
+    .btn-secondary {
+        background-color: #27272a;
+        color: #ffffff;
+        border: 1px solid #3f3f46;
+    }
 
-        .btn-primary {
-            background-color: #f97316;
-            color: #ffffff;
-            box-shadow: 0 1px 15px rgba(249, 115, 22, 0.2);
-        }
+    .btn-secondary:hover {
+        background-color: #3f3f46;
+        transform: translateY(-2px);
+    }
 
-        .btn-primary:hover {
-            background-color: rgba(39, 39, 42, 0.8);
-            color: #ffffff;
-            border-color: #52525b;
-            transform: translateY(-2px);
-        }
-    </style>
-</head>
-<body>
+    /* Target the Logout button specifically to keep it distinct */
+    .btn-logout {
+        color: #f87171;
+        border-color: #7f1d1d;
+        background: transparent;
+    }
+</style>
 
-    <div class="title-container">
-        <h1>Empyreal P&C Timesheet</h1>
-    </div>
+<div class="button-container">
+    <a href="{% url 'submit_timesheet' %}" class="btn btn-primary">New Timesheet</a>
+    <a href="{% url 'timesheet_history' %}" class="btn btn-secondary">History</a>
 
-    <div class="card">
-        <a href="{% url 'submit_timesheet' %}" class="btn btn-primary">Record Time</a>
-        <a href="{% url 'login' %}" class="btn btn-primary">Edit Time</a>
-    </div>
-
-</body>
-</html>
+    <form action="{% url 'logout' %}" method="post" style="width: 100%; margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary btn-logout">Logout</button>
+    </form>
+</div>
+{% endblock %}

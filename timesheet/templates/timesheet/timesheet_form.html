@@ -6,13 +6,20 @@
     .timesheet-card {
         background-color: rgba(21, 21, 23, 0.95);
         border: 1px solid #27272a;
-        border-radius: 12px;
-        padding: 40px;
-        width: 100%;
-        max-width: 600px;
-        margin: 40px auto;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+        border-radius: 0px;
+        margin-top: 0px; /* Ensure this is 0 */
+        box-shadow: none;
         color: #ffffff;
+        border-radius: 20px;
+    }
+
+    .main-title .sub-title {
+        display: block; /* Moves 'Timesheet' to its own line for a professional stacked look */
+        font-size: 1.2rem; /* Much smaller than the main name */
+        font-weight: 400; /* Thinner weight for contrast */
+        letter-spacing: 6px; /* High tracking for a modern, 'wide' cinematic feel */
+        color: #ffffff; /* Contrast against the orange, or keep #f97316 if preferred */
+        opacity: 0.8;
     }
 
     .header-row {
@@ -21,7 +28,7 @@
         align-items: baseline;
         border-bottom: 1px solid #3f3f46;
         padding-bottom: 15px;
-        margin-bottom: 25px;
+        margin-bottom: 15px;
     }
 
     h2 { margin: 0; color: #f97316; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
@@ -86,18 +93,9 @@
     .allocation-good { color: #22c55e; } /* Green */
     .allocation-bad { color: #ff4444; }  /* Red */
 
-    .page-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* This centers the children horizontally */
-    justify-content: flex-start;
-    min-height: 100vh;
-    padding: 40px 20px;
-    }
-
     .brand-header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 0px;
     }
 
     .brand-header h1 {
@@ -118,7 +116,8 @@
 
     /* Ensure the card doesn't have "margin: auto" fighting the flexbox */
     .timesheet-card {
-        margin: 0;
+        margin: 0px auto;
+        padding: 20px 40px 20px 40px;
         /* ... keep your other existing card styles ... */
     }
 
@@ -187,13 +186,14 @@
         background-color: rgba(239, 68, 68, 0.1) !important;
     }
 
+    #lunch-summary {
+    transition: opacity 0.2s ease-in-out;
+    min-height: 1.2rem; /* Reserves space so the layout doesn't jump when text appears */
+    }
+
 </style>
 
 <div class="page-wrapper">
-    <div class="brand-header">
-        <h1>EMPYREAL P&C</h1>
-        <p class="sub-brand">TIMESHEET</p>
-    </div>
 
     <div class="timesheet-card">
         <div class="header-row">
@@ -212,40 +212,82 @@
         <form id="timesheetForm" method="POST">
             {% csrf_token %}
 
+            {% if override_warning %}
+            <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid #eab308; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <p style="color: #eab308; margin: 0; font-weight: 800; text-transform: uppercase;">
+                    ⚠️ Duplicate Date Detected
+                </p>
+                <p style="color: #eab308; font-size: 0.9rem; margin: 5px 0 15px 0;">
+                    You already have a timesheet saved for <strong>{{ existing_date }}</strong>. Saving this will overwrite your previous entry for this day.
+                </p>
+                <input type="hidden" name="confirm_override" value="true">
+            </div>
+            {% endif %}
+
             <div class="form-group">
                 <label>Date</label>
                 <input type="date" id="date" name="date" required
-                       value="{% if instance %}{{ instance.date_worked|date:'Y-m-d' }}{% endif %}">
+                       value="{% if p_date %}{{ p_date }}{% elif instance %}{{ instance.date_worked|date:'Y-m-d' }}{% endif %}">
             </div>
 
             <div class="form-group">
                 <label>Job</label>
                 <input type="text" id="job" name="job" placeholder="E.g., 123 Main St Project" required
-                       value="{% if instance %}{{ instance.task_description }}{% endif %}">
+                       value="{% if p_job %}{{ p_job }}{% elif instance %}{{ instance.task_description }}{% endif %}">
             </div>
 
             <div class="form-group">
-                <label>Start Time</label>
-                <input type="time" id="start_time" name="start_time" class="time-input" required
-                       value="{% if instance %}{{ instance.start_time|time:'H:i' }}{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>Start Time</label>
+                    <span style="font-size: 0.65rem; color: #71717a; text-transform: none;">Use 09:00 format</span>
+                </div>
+                <input type="time" id="start_time" name="start_time" class="time-input"
+                        value="{{ p_start }}" required onchange="calculateTimes()">
             </div>
 
             <div class="form-group">
                 <label>Lunch Break</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-                    <button type="button" class="btn-secondary" style="flex: 1;" onclick="setLunch(30)">30 Min</button>
-                    <button type="button" class="btn-secondary" style="flex: 1;" onclick="setLunch(60)">60 Min</button>
-                    <button type="button" class="btn-secondary" style="color: #ff4444; border-color: #442222;" onclick="setLunch(0)">None</button>
+                <input type="hidden" id="active_lunch_preset" value="">
+
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button type="button" class="btn-secondary" id="btn-30" style="flex: 1; font-size: 0.75rem;" onclick="activatePreset(30)">30 MIN</button>
+                    <button type="button" class="btn-secondary" id="btn-60" style="flex: 1; font-size: 0.75rem;" onclick="activatePreset(60)">60 MIN</button>
+                    <button type="button" class="btn-secondary" style="flex: 1; font-size: 0.75rem;" onclick="showCustomLunch()">CUSTOM</button>
+                    <button type="button" class="btn-secondary" style="flex: 1; font-size: 0.75rem; color: #ff4444; border-color: #442222;" onclick="clearLunch()">NONE</button>
                 </div>
-                <p id="lunch-status" style="font-size: 0.8rem; color: #a1a1aa; margin: 0; font-style: italic;">No lunch recorded</p>
-                    <input type="hidden" id="lunch_out" name="lunch_out" value="{% if instance and instance.lunch_duration > 0 %}12:00{% endif %}">
-                    <input type="hidden" id="lunch_in" name="lunch_in" value="{% if instance %}{% if instance.lunch_duration == 30 %}12:30{% elif instance.lunch_duration == 60 %}13:00{% endif %}{% endif %}">
+
+                <div id="lunch-drawer" style="display: none; background: #18181b; padding: 15px; border-radius: 8px; border: 1px solid #3f3f46; margin-bottom: 15px;">
+                    <p id="lunch-instruction" style="font-size: 0.75rem; color: #f97316; margin: 0 0 10px 0; font-weight: bold;"></p>
+
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.65rem; color: #a1a1aa; text-transform: uppercase;">Lunch Start</label>
+                            <input type="time"
+                                   id="lunch_start_time"
+                                   name="lunch_start_time"
+                                   class="time-input"
+                                   value="{{ p_l_start }}"
+                                   oninput="handleLunchStartChange()"
+                                   onchange="calculateTimes()">
+                        </div>
+                        <div style="color: #3f3f46; padding-top: 15px;">—</div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.65rem; color: #a1a1aa; text-transform: uppercase;">Lunch End</label>
+                            <input type="time" id="lunch_end_time" name="lunch_end_time" class="time-input"
+                                    value="{{ p_l_end }}" onchange="calculateTimes()">
+                        </div>
+                    </div>
+                    <p id="lunch-summary" style="font-size: 0.8rem; color: #22c55e; margin: 10px 0 0 0; font-weight: 700;"></p>
+                    <div class="error-msg" id="lunch_error" style="color: #ff4444; font-size: 0.8rem; margin-top: 5px; display: none;">
+                        Lunch must be within work hours and start before it ends.
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
                 <label>End Time</label>
-                <input type="time" id="end_time" name="end_time" class="time-input" required
-                       value="{% if instance %}{{ instance.end_time|time:'H:i' }}{% endif %}">
+                <input type="time" id="end_time" name="end_time" class="time-input"
+                        value="{{ p_end }}" required onchange="calculateTimes()">
                 <button type="button" class="btn-now" onclick="setCurrentTime('end_time')">Current Time</button>
                 <div class="error-msg" id="end_error">End time must be later than Start time.</div>
             </div>
@@ -257,7 +299,28 @@
 
             <div class="form-group" id="trade_container">
                 <label>Trade Type Allocation</label>
-                {% if instance %}
+
+                {% if p_trades %}
+                    {% for t_type, t_hours in p_trades %}
+                    <div class="trade-row">
+                        <select class="trade-select" name="trade_type[]" required>
+                            <option value="" disabled>Select Trade...</option>
+                            <option value="Painting - Interior" {% if t_type == "Painting - Interior" %}selected{% endif %}>Painting - Interior</option>
+                            <option value="Painting - Exterior" {% if t_type == "Painting - Exterior" %}selected{% endif %}>Painting - Exterior</option>
+                            <option value="Roofing" {% if t_type == "Roofing" %}selected{% endif %}>Roofing</option>
+                            <option value="Framing" {% if t_type == "Framing" %}selected{% endif %}>Framing</option>
+                            <option value="Finish Carpentry" {% if t_type == "Finish Carpentry" %}selected{% endif %}>Finish Carpentry</option>
+                            <option value="Flooring" {% if t_type == "Flooring" %}selected{% endif %}>Flooring</option>
+                            <option value="Fencing" {% if t_type == "Fencing" %}selected{% endif %}>Fencing</option>
+                            <option value="Remodel / Repair" {% if t_type == "Remodel / Repair" %}selected{% endif %}>Remodel / Repair</option>
+                            <option value="Estimator" {% if t_type == "Estimator" %}selected{% endif %}>Estimator</option>
+                        </select>
+                        <input type="number" class="trade-hours" name="trade_hours[]" step="0.01" min="0" value="{{ t_hours }}" required>
+                        <button type="button" class="btn-secondary remove-trade" style="color:#ff4444; border-color:#ff4444;">X</button>
+                    </div>
+                    {% endfor %}
+
+                {% elif instance %}
                     {% for allocation in instance.trade_allocations.all %}
                     <div class="trade-row">
                         <select class="trade-select" name="trade_type[]" required>
@@ -314,7 +377,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('date');
 
-    // 1. Only autofill date if it's a NEW entry
+    // 1. Only autofill date if it's completely blank
     if (!dateInput.value) {
         const now = new Date();
         const localDate = now.getFullYear() + '-' +
@@ -323,12 +386,10 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.value = localDate;
     }
 
-    // 2. Handle Trade Rows based on whether we are Editing or New
-    {% if instance %}
-        // If editing, the HTML already looped through the saved rows. We just need to activate them.
-        const savedDuration = {{ instance.lunch_duration|default:0 }};
-        setLunch(savedDuration);
-        document.querySelectorAll('.trade-row').forEach(row => {
+    // 2. Look for ANY trade rows that were pre-rendered
+    const existingRows = document.querySelectorAll('.trade-row');
+    if (existingRows.length > 0) {
+        existingRows.forEach(row => {
             row.querySelector('.trade-hours').addEventListener('input', updateAllocation);
             row.querySelector('.trade-select').addEventListener('change', updateAllocation);
             row.querySelector('.remove-trade').addEventListener('click', function(e) {
@@ -336,10 +397,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateAllocation();
             });
         });
-    {% else %}
-        // If new, spawn the first blank row
+    } else {
         addTradeRow();
-    {% endif %}
+    }
+
+    // NEW: Logic to keep the lunch drawer open if data exists (for edits or errors)
+    const lunchStartInput = document.getElementById('lunch_start_time');
+    if (lunchStartInput && lunchStartInput.value) {
+        document.getElementById('lunch-drawer').style.display = 'block';
+    }
 
     // 3. Attach listeners to static elements
     document.querySelectorAll('.time-input').forEach(input => {
@@ -347,9 +413,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('add_trade_btn').addEventListener('click', addTradeRow);
 
-    // 4. Force calculation on load to display saved Total Hours and Allocations
+    // 4. Force calculation on load
     calculateTimes();
 });
+
+function showCustomLunch() {
+    document.getElementById('active_lunch_preset').value = "";
+    document.getElementById('lunch-instruction').textContent = "Enter custom lunch times:";
+    document.getElementById('lunch-drawer').style.display = 'block';
+
+    // --- RESET THE MESSAGE ---
+    document.getElementById('lunch-summary').textContent = "";
+
+    document.getElementById('lunch_start_time').value = "";
+    document.getElementById('lunch_end_time').value = "";
+    calculateTimes();
+}
+
+function clearLunch() {
+    document.getElementById('lunch-drawer').style.display = 'none';
+    document.getElementById('active_lunch_preset').value = "";
+    document.getElementById('lunch_start_time').value = "";
+    document.getElementById('lunch_end_time').value = "";
+    calculateTimes();
+}
 
 // --- GLOBAL FUNCTIONS ---
 
@@ -368,43 +455,73 @@ function addTradeRow() {
 }
 
 function calculateTimes() {
+    // Reset Errors
     document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-    document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+    const lunchError = document.getElementById('lunch_error');
+    if (lunchError) lunchError.style.display = 'none';
+    document.getElementById('end_error').style.display = 'none';
 
-    const start = document.getElementById('start_time').value;
-    const lunchOut = document.getElementById('lunch_out').value;
-    const lunchIn = document.getElementById('lunch_in').value;
-    const end = document.getElementById('end_time').value;
+    const s = document.getElementById('start_time').value;
+    const e = document.getElementById('end_time').value;
+    const ls = document.getElementById('lunch_start_time').value;
+    const le = document.getElementById('lunch_end_time').value;
 
-    if (start && end) {
-        const sVal = timeToDecimal(start);
-        const eVal = timeToDecimal(end);
-        let isValid = true;
+    if (s && e) {
+        let sVal = timeToDecimal(s);
+        let eVal = timeToDecimal(e);
 
-        if (sVal >= eVal) {
-            isValid = false;
+        // --- MIDNIGHT CROSSOVER LOGIC ---
+        // If end time is earlier than start time (e.g., 10pm to 2am)
+        if (eVal < sVal) {
+            eVal += 24; // Treat 2am as 26:00 for the math
+        }
+
+        const totalShiftDuration = eVal - sVal;
+
+        // 16-Hour Sanity Check
+        if (totalShiftDuration > 16) {
+            document.getElementById('end_error').textContent = "Shift cannot exceed 16 hours.";
             document.getElementById('end_error').style.display = 'block';
             document.getElementById('end_time').classList.add('input-error');
+            document.getElementById('total_hours').value = "0.00";
+            updateAllocation();
+            return;
         }
 
-        if (isValid) {
-            let totalShift = eVal - sVal;
-            let lunchBreak = 0;
+        let lunchDecimal = 0;
+        if (ls && le) {
+            let lsVal = timeToDecimal(ls);
+            let leVal = timeToDecimal(le);
 
-            if (lunchOut && lunchIn) {
-                const loVal = timeToDecimal(lunchOut);
-                const liVal = timeToDecimal(lunchIn);
-                if (liVal > loVal) {
-                    lunchBreak = liVal - loVal;
-                }
+            // Handle lunch crossover midnight (rare, but possible)
+            if (leVal < lsVal) leVal += 24;
+
+            // Adjust lunch window if it happened after midnight
+            // but the work shift also crossed midnight
+            if (lsVal < sVal && eVal > 24) {
+                lsVal += 24;
+                leVal += 24;
             }
 
-            let finalHours = totalShift - lunchBreak;
-            if (finalHours < 0) finalHours = 0;
-            document.getElementById('total_hours').value = finalHours.toFixed(2);
-        } else {
-            document.getElementById('total_hours').value = "0.00";
+            // SANITY CHECK: Lunch must be within Work boundaries
+            const isWithinWorkHours = (lsVal >= sVal && leVal <= eVal);
+            const startsBeforeEnds = (lsVal < leVal);
+
+            if (!isWithinWorkHours || !startsBeforeEnds) {
+                if (lunchError) lunchError.style.display = 'block';
+                document.getElementById('lunch_start_time').classList.add('input-error');
+                document.getElementById('lunch_end_time').classList.add('input-error');
+                document.getElementById('lunch-summary').textContent = "";
+                lunchDecimal = 0;
+            } else {
+                lunchDecimal = leVal - lsVal;
+                document.getElementById('lunch-summary').textContent =
+                    `✓ ${Math.round(lunchDecimal * 60)} minute lunch confirmed`;
+            }
         }
+
+        let finalHours = totalShiftDuration - lunchDecimal;
+        document.getElementById('total_hours').value = Math.max(0, finalHours).toFixed(2);
     }
     updateAllocation();
 }
@@ -464,24 +581,6 @@ function timeToDecimal(t) {
     return parseInt(h, 10) + parseInt(m, 10) / 60;
 }
 
-function setLunch(minutes) {
-    const statusText = document.getElementById('lunch-status');
-    const outField = document.getElementById('lunch_out');
-    const inField = document.getElementById('lunch_in');
-
-    if (minutes === 0) {
-        outField.value = ""; inField.value = "";
-        statusText.textContent = "No lunch recorded";
-        statusText.style.color = "#a1a1aa";
-    } else {
-        outField.value = "12:00";
-        inField.value = (minutes === 30) ? "12:30" : "13:00";
-        statusText.textContent = `✓ ${minutes} min lunch applied`;
-        statusText.style.color = "#22c55e";
-    }
-    calculateTimes();
-}
-
 function setCurrentTime(inputId) {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
@@ -489,6 +588,68 @@ function setCurrentTime(inputId) {
     document.getElementById(inputId).value = `${hours}:${minutes}`;
     calculateTimes();
 }
+
+function decimalToTime(dec) {
+    // Ensure we handle the "24 hour wrap" if someone works past midnight
+    let hours = Math.floor(dec) % 24;
+    let minutes = Math.round((dec - Math.floor(dec)) * 60);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function activatePreset(minutes) {
+    const drawer = document.getElementById('lunch-drawer');
+    const instruction = document.getElementById('lunch-instruction');
+    const startInput = document.getElementById('lunch_start_time');
+    const endInput = document.getElementById('lunch_end_time');
+    const summary = document.getElementById('lunch-summary'); // Get the summary element
+
+    // --- RESET THE MESSAGE ---
+    summary.textContent = "";
+
+    document.getElementById('active_lunch_preset').value = minutes;
+    startInput.value = "";
+    endInput.value = "";
+    drawer.style.display = 'block';
+    instruction.textContent = `Please enter Lunch Start time (for ${minutes} min break):`;
+    startInput.focus();
+    calculateTimes();
+}
+
+/**
+ * 2. The "Auto-Snap" Logic
+ * Triggers as the user types/selects the start time
+ */
+function handleLunchStartChange() {
+    const preset = document.getElementById('active_lunch_preset').value;
+    const startVal = document.getElementById('lunch_start_time').value;
+    const endInput = document.getElementById('lunch_end_time');
+
+    if (preset && startVal) {
+        const startDec = timeToDecimal(startVal);
+        const durationDec = parseInt(preset) / 60;
+        const endDec = startDec + durationDec;
+
+        // Automatically fill the end time based on the preset
+        endInput.value = decimalToTime(endDec);
+
+        // Trigger the main calculation and validation
+        calculateTimes();
+    }
+}
+
+// Ensure this runs once the page is fully loaded
+window.addEventListener('DOMContentLoaded', (event) => {
+    const lunchStart = document.getElementById('lunch_start_time').value;
+    const lunchDrawer = document.getElementById('lunch-drawer');
+
+    // If there is a saved value (from an edit session), show the drawer automatically
+    if (lunchStart) {
+        lunchDrawer.style.display = 'block';
+        // Optional: clear any "instruction" text since the data is already there
+        document.getElementById('lunch-instruction').textContent = "Editing saved lunch break:";
+    }
+});
+
 </script>
 
 {% endblock %}
