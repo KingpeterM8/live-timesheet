@@ -5,6 +5,8 @@ from django.db import transaction
 from .models import TimesheetEntry, TradeAllocation
 from django.utils import timezone
 from datetime import date, timedelta, datetime
+from django.db.models import Sum
+
 
 @login_required
 def submit_timesheet(request, pk=None):
@@ -214,4 +216,62 @@ def timesheet_history(request):
         'entries': entries,
         'period_start': period_start,
         'period_end': period_end
+    })
+
+@login_required
+def history_view(request):
+    today = date.today()
+
+    # --- NEW: Calculate the ACTUAL current pay period for the static header ---
+    if today.day <= 15:
+        curr_start = today.replace(day=1)
+        curr_end = today.replace(day=15)
+    else:
+        curr_start = today.replace(day=16)
+        next_month = today.replace(day=28) + timedelta(days=4)
+        curr_end = next_month - timedelta(days=next_month.day)
+
+    # --- Existing logic for the period the user is LOOKING at ---
+    view_date_str = request.GET.get('date')
+    view_date = date.fromisoformat(view_date_str) if view_date_str else today
+
+    # (Keep your existing start_date/end_date calculation logic here...)
+    if view_date.day <= 15:
+        start_date = view_date.replace(day=1)
+        end_date = view_date.replace(day=15)
+        prev_period_date = (start_date - timedelta(days=1)).replace(day=16)
+        next_period_date = view_date.replace(day=16)
+    else:
+        start_date = view_date.replace(day=16)
+        next_month = view_date.replace(day=28) + timedelta(days=4)
+        end_date = next_month - timedelta(days=next_month.day)
+        prev_period_date = view_date.replace(day=1)
+        next_period_date = (end_date + timedelta(days=1))
+
+    # (Keep your existing show_previous/show_next logic here...)
+    earliest_entry = TimesheetEntry.objects.filter(user=request.user).order_by('date_worked').first()
+    earliest_date = earliest_entry.date_worked if earliest_entry else today
+    show_previous = prev_period_date >= earliest_date.replace(day=1)
+    show_next = next_period_date <= today
+
+    entries = TimesheetEntry.objects.filter(
+        user=request.user,
+        date_worked__range=[start_date, end_date]  # Use the corrected field name 'date_worked'
+    ).order_by('-date_worked')
+
+    total_hours = entries.aggregate(Sum('hours_worked'))['hours_worked__sum'] or 0
+
+    return render(request, 'timesheet/history.html', {
+        'entries': entries,
+        'total_hours': total_hours,  # Pass this to the template
+        'prev_period_date': prev_period_date.isoformat(),
+        'next_period_date': next_period_date.isoformat(),
+        'show_previous': show_previous,
+        'show_next': show_next,
+        'start_date': start_date,  # Used for the navigation label
+        'end_date': end_date,  # Used for the navigation label
+        'curr_start': curr_start,  # NEW: Used for the static header
+        'curr_end': curr_end,  # NEW: Used for the static header
+        'curr_start': curr_start,
+        'curr_end': curr_end,
     })

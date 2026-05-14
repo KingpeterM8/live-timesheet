@@ -99,7 +99,7 @@
     }
 
     .btn-submit:hover { background-color: #ea580c; }
-    
+
     .status-badge {
         font-size: 0.75rem;
         padding: 4px 8px;
@@ -107,16 +107,124 @@
         font-weight: 700;
         text-transform: uppercase;
     }
-    
+
     .status-draft { background-color: rgba(249, 115, 22, 0.2); color: #f97316; }   /* Orange */
     .status-pending { background-color: rgba(234, 179, 8, 0.2); color: #eab308; } /* Yellow */
     .status-approved { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; } /* Green */
+
+    .button-container {
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .nav-column {
+        width: 120px; /* Fixed width prevents shifting when buttons disappear */
+    }
+
+    .current-period-label {
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-align: center;
+        flex: 1;
+    }
+    .btn-nav {
+        display: inline-block;
+        background-color: transparent;
+        color: #f97316; /* Vivid Orange */
+        border: 1px solid #f97316;
+        padding: 8px 16px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+        background-color: #f97316;
+        color: #000000; /* Black text on orange background */
+    }
+
+    .btn-disabled {
+        color: #3f3f46; /* Dimmed gray for inactive state */
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .bz {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 12px; /* Smaller padding makes the buttons sleeker */
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem; /* Slightly smaller text */
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        text-decoration: none;
+        box-sizing: border-box;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-three {
+        background-color: #27272a;
+        color: #ffffff;
+        border: 1px solid #3f3f46;
+        transition: all 0.2s ease;
+    }
+
+    .btn-three:hover {
+        background-color: #3f3f46;
+    }
+
 </style>
 
     <div class="timesheet-card">
-        <p style="color: #a1a1aa; text-align: center; margin-top: 0; margin-bottom: 30px; font-weight: 700;">
-            CURRENT PAY PERIOD: {{ period_start|date:"M d" }} - {{ period_end|date:"M d, Y" }}
+
+        <p style="color: #a1a1aa; text-align: center; margin-top: 0; margin-bottom: 30px; font-weight: 700; text-transform: uppercase;">
+            {% if start_date == curr_start %}
+                Current Pay Period: {{ curr_start|date:"M d" }} - {{ curr_end|date:"M d, Y" }}
+            {% else %}
+                Viewing Past Pay Period: {{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}
+            {% endif %}
         </p>
+
+        <div class="button-container">
+            <div style="width: 120px;">
+                {% if show_previous %}
+                    <a href="?date={{ prev_period_date }}" class="btn-nav">← Back</a>
+                {% else %}
+                    <span class="btn-disabled">Start</span>
+                {% endif %}
+            </div>
+            <div style="text-align: center; margin-bottom: 10px;">
+                <span style="color: #a1a1aa; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                    Period Total:
+                </span>
+                <span style="color: #f97316; font-size: 1.5rem; font-weight: 900; margin-left: 10px;">
+                    {{ total_hours|floatformat:2 }} hrs
+                </span>
+            </div>
+
+            <div style="width: 120px; text-align: right;">
+                {% if show_next %}
+                    <a href="?date={{ next_period_date }}" class="btn-nav">Next →</a>
+                {% else %}
+                    <span class="btn-disabled">Latest</span>
+                {% endif %}
+            </div>
+        </div>
+
 
         {% for entry in entries %}
         <div class="summary-box" style="border-left: 4px solid
@@ -155,7 +263,11 @@
 {% endfor %}
 
         <a href="{% url 'submit_timesheet' %}" class="btn-submit">
-            + RECORD NEW TIME
+            RECORD NEW TIME
+        </a>
+
+        <a href="{% url 'home' %}" class="bz btn-three" style="margin-top: 15px">
+            Return Home
         </a>
     </div>
 {% endblock %}

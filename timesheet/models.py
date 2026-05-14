@@ -35,6 +35,17 @@ class TimesheetEntry(models.Model):
     lunch_start_time = models.TimeField(null=True, blank=True)
     lunch_duration = models.IntegerField(default=0)
 
+    @property
+    def lunch_end_time(self):
+        if self.lunch_start_time:
+            # Convert time to a datetime object to add minutes
+            import datetime
+            dummy_date = datetime.date.today()
+            full_datetime = datetime.datetime.combine(dummy_date, self.lunch_start_time)
+            end_datetime = full_datetime + datetime.timedelta(minutes=self.lunch_duration)
+            return end_datetime.time()
+        return None
+
     date_worked = models.DateField()
     hours_worked = models.DecimalField(max_digits=5, decimal_places=2)
     task_description = models.TextField(blank=True)  # This is your "Job" field
