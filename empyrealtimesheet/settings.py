@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/ dada
 """
 
 from pathlib import Path
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,6 +35,8 @@ AXES_IP_WHITELIST_FIELD = 'HTTP_X_FORWARDED_FOR' # For railway
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -150,3 +153,28 @@ AXES_LOCKOUT_TEMPLATE = 'axes/lockout.html'
 TIME_ZONE = 'America/Los_Angeles'
 
 USE_TZ = True
+
+UNFOLD = {
+    "SITE_TITLE": "Empyreal Admin",
+    "SITE_HEADER": "Empyreal Painting & Construction",
+    "SITE_SYMBOL": "speed",  # Pick an icon from Material Symbols
+    "COLORS": {
+        "primary": {
+            "50": "255 247 237",
+            "100": "255 237 213",
+            "200": "253 186 116",
+            "300": "251 146 60",
+            "400": "251 146 60",
+            "500": "249 115 22",  # This is your #F97316 Vivid Orange
+            "600": "234 88 12",
+            "700": "194 65 12",
+            "800": "154 52 18",
+            "900": "124 45 18",
+            "950": "67 20 7",
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+    },
+}
